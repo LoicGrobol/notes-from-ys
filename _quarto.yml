@@ -1,6 +1,6 @@
 project:
   type: website
-  output-dir: blog
+  output-dir: _site
 
 website:
   title: "notes-from-ys"

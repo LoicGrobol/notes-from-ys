@@ -1,5 +1,5 @@
 ---
-title: "notes-from-ys"
+title: "Notes from Ys and elsewhere"
 listing:
   contents: posts
   sort: "date desc"
