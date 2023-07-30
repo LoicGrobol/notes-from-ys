@@ -2,11 +2,20 @@ on:
   workflow_dispatch:
   push:
     branches: main
+    
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 name: Quarto Publish
 
 jobs:
   build-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,9 +32,16 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Render and Publish
-        uses: quarto-dev/quarto-actions/publish@v2
+      - name: Render Quarto Project
+          uses: quarto-dev/quarto-actions/render@v2
+          with:
+            to: html # If set, it will be equivalent to `quarto render --to html`
+            path: "docs" # By default, the current working dir is used i.e `quarto render `
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          target: gh-pages
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Upload entire repository
+          path: 'docs'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
