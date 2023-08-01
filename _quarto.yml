@@ -15,7 +15,9 @@ website:
 
 format:
   html:
-    theme: quartz
+    theme: 
+      - quartz
+      - custom.scss
     css: styles.css
 
 editor: visual
