@@ -166,7 +166,7 @@ $$
 Solving this linear system directly is computationally intensive, but in this case ${X^*}^TX^*$ is definite positive[^2] and it can be made more efficient using [Cholesky's decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition), which in this case amounts to find a lower triangular matrix $L_{\theta}$ such that
 
 $$
-P^TL_{\theta}L_{\theta}^TP = X^TX
+P^TL_{\theta}L_{\theta}^TP = {X^*}^TX^*
 $$ {#eq-chol}
 
 where $P$ is a the permutation matrix obtained from a [(approximated) minimal degree algorithm](https://en.wikipedia.org/wiki/Minimum_degree_algorithm) to makes the decomposition process even more efficient[^3].
