@@ -153,6 +153,12 @@ This looks very much like @eq-PRSS-eq! Now we only need a tiny bit of work to go
 
 $$
 \lVert y - X\beta \rVert^2  - \lVert y - X\hat{\beta} \rVert^2 = (\hat{\beta}-\beta)^TX^TX(\hat{\beta}-\beta)
+$$ 
+
+Which, if we apply it to @eq-OLS-star gives us:
+
+$$
+\lVert y - X^*u \rVert^2  - \lVert y - X^*\tilde{u} \rVert^2 = (\tilde{u}-u)^T{X^*}^TX^*(\tilde{u}-u)
 $$ {#eq-OLS-to-inject}
 
 ## Cholesky and his friend
@@ -180,11 +186,11 @@ We have all the ingredients we need, let's just plug @eq-chol into @eq-OLS-to-in
 
 $$
 \begin{align}
-  \lVert y - X\beta \rVert^2  - \lVert y - X\hat{\beta} \rVert^2
-    &= (\hat{\beta}-\beta)^TX^TX(\hat{\beta}-\beta)\\
-    &= (\hat{\beta}-\beta)^TP^TL_{\theta}L_{\theta}^TP(\hat{\beta}-\beta)\\
-    &= \left[L_{\theta}^TP(\hat{\beta}-\beta)\right]^T\left[L_{\theta}^TP(\hat{\beta}-\beta)\right]\\
-    &= \lVert L_{\theta}^TP(\hat{\beta}-\beta)\rVert^2
+  \lVert y - X^*u \rVert^2  - \lVert y - X^*\tilde{u} \rVert^2
+    &= (\tilde{u}-u)^T{X^*}^TX^*(\tilde{u}-u)\\
+    &= (\tilde{u}-u)^TP^TL_{\theta}L_{\theta}^TP(\tilde{u}-u)\\
+    &= \left[L_{\theta}^TP(\tilde{u}-u)\right]^T\left[L_{\theta}^TP(\tilde{u}-u)\right]\\
+    &= \lVert L_{\theta}^TP(\tilde{u}-u)\rVert^2
 \end{align}
 $$
 
