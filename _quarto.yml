@@ -3,14 +3,16 @@ project:
   output-dir: _site
 
 website:
-  title: "notes-from-ys"
+  title: "Notes from Ys and elsewhere"
+  repo-url: "https://github.com/LoicGrobol/notes-from-ys"
+  reader-mode: true
+  back-to-top-navigation: true
   navbar:
     right:
       - about.qmd
       - icon: github
-        href: https://github.com/
-      - icon: twitter
-        href: https://twitter.com
+        href: "https://github.com/LoicGrobol/notes-from-ys"
+
 format:
   html:
     theme: quartz

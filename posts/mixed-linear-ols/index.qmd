@@ -1,0 +1,200 @@
+---
+title: "That pesky equation 5.25"
+author: "Loïc Grobol"
+date: "2023-08-01"
+categories: [statistics, maths, R, linear algebra]
+image: "image.jpg"
+image-alt: "A view of Times Square."
+bibliography: biblio.bib
+---
+
+![](image.jpg){fig-alt="A view of Times Square."}
+
+*A cute property of Penalized Least Squares that took me more work than I'm comfortable disclosing.*
+
+<small>*Header by <a href="https://commons.wikimedia.org/wiki/File:New_york_times_square-terabass.jpg">Terabass</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>, via Wikimedia Commons*</small>
+
+I'm currently reading Douglas M. Bates' “lme4: Mixed-effects modeling with R” (@bates2018Lme4MixedeffectsModeling, the latest version, which for some reason seems only available from [someone at ETH Zurich's personal stash](https://stat.ethz.ch/~maechler/MEMo-pages/lMMwR.pdf)). It's generally well written and I have learned a lot, but I find it a bit too terse in some places, with unclear jumps in the reasoning or computations. One such jump is equation 5.25:
+
+$$
+\lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2 + \lVert u\rVert^2 = r_{\theta,\beta}^2 + \lVert L_{\theta}^TP(u-\tilde{u}])\rVert^2
+$$ {#eq-PRSS-eq}
+
+I have had inordinate troubles understanding how the author arrived at this, so for the benefit of (at least) the futures versions of myself who will have forgotten this, I will try to fill the gaps, leaving as little impliciteness as possible.
+
+## Problem statement
+
+For brevity's sake, I will try to keep to the useful definitions, but here are some pointers on what's going on here:
+
+- We're trying to fit a mixed-effects linear model (MELM) with observations $y_{\mathrm{obs}}$, $\beta$ and $u$ [^1] are the parameters associated with the fixed and the random effects respectively.
+- The left-hand side is a **Penalized Residual Sum of Squares** (PRSS)
+  - The first part, $\lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2$ is the [sum of squared residuals](https://en.wikipedia.org/wiki/Residual_sum_of_squares) for the problem $y = X\beta - Z\Lambda_{\theta}u + \varepsilon$.
+  - The second part is a penalty term on the norm of $u$, which comes from the chosen formulation of the MELM where the random effects follow a centered normal distribution. It also has the nice effect of favoring fixed-effect explanations (more on this in another post, hopefully).
+- The whole left-hand side is minimized at $\tilde{u}$ with value $r_{\theta,\beta}^2$, i.e.
+  
+  $$
+    \tilde{u} = \mathop{\mathrm{argmin}}_u \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2 + \lVert u\rVert^2
+  $$
+  and
+  
+  $$
+    r_{\theta,\beta} = \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}\tilde{u}\rVert + \lVert \tilde{u}\rVert^2
+  $$
+
+[^1]: $u$ is not *really* a vector of parameters, as you'll find out if you read through the book, but for the purpose of this exposition we can think of it as one.
+
+In other words, @eq-PRSS-eq means that **for all $u$**, the PRSS can be written as the sum of its minimal value $r_{\theta,\beta}^2$ and a residual term: $\lVert L_{\theta}^TP(u-\tilde{u}])\rVert^2$, which contains the difference between $u$ and its optimal value $\tilde{u}$ (that was to be expected since this residual must be zero when $u=\tilde{u}).
+
+Note that I have not described every variable here, most glaringly $L_{\theta}$ and $P$, their time will come later.
+
+## Ordinary sum of squared residuals
+
+We have called the left-hand side of @eq-PRSS-eq a *Penalized Residual Sum of Squares**. There are two notable things here
+
+- Manipulating this is **not** nice. Sums of norms, even squared ones are not very appealing in general. If we attempt to prove equation (5.25) directly, this will be a major pain.
+- This PRSS looks **tantalizingly** like a normal sum of squared residuals. If you squint, it's actually a sum of squared sums of squares.
+
+So the first thing we will do is to actually make it look like the SSR of an ordinary least squares problem using the following trick: for all $u$ we have,
+
+$$
+\begin{aligned}
+\lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2 + \lVert u\rVert^2
+    &= \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2 + \lVert -u\rVert^2\\
+    &= \left\lVert \begin{bmatrix}y_{\mathrm{obs}} - X\beta
+    - Z\Lambda_{\theta}-u\\-u\end{bmatrix}\right\rVert^2\\
+    &= \left\lVert \underbrace{\begin{bmatrix}y_{\mathrm{obs}} - X\beta\\0\end{bmatrix}}_{y^*}
+    - \underbrace{\begin{bmatrix}Z\Lambda_{\theta}\\I\end{bmatrix}}_{X^*}u\right\rVert^2
+\end{aligned}
+$$ {#eq-PRSS-to-SSR}
+
+Where the brackets denote stacking (of vectors and of matrices) and $I$ is the identity matrix (of the appropriate size, which is $q$, the number of random effects). The second line is simply a rewriting of the fact that the squared norm of a vector is the sum of its squared coordinates ; the second line is just factoring out the common $u$.
+
+Now, this is the SSR for an ordinary least square problem:
+
+$$
+y^* = X^*u + \varepsilon
+$$ {#eq-OLS-star}
+
+and $(\tilde{u}, r_{\theta, \beta}^2)$ must there also be a solution of @eq-OLS-star.
+
+Note that @eq-OLS-star is not just any OLS problem: $y^*$ and $X^*$ have very specific properties that *could* be necessary to obtain @eq-PRSS-eq. But it actually turns out that they aren't and @eq-PRSS-eq is actually a property of OLS problems in general.
+
+## A property of ordinary least squares problems
+
+Let's take a step back and conssider a general OLS problem
+
+$$
+Y = X\beta + \varepsilon
+$$
+
+It's [well known](https://en.wikipedia.org/wiki/Ordinary_least_squares#Matrix/vector_formulation) that (if the problem is overdetermined), the sum of squared residuals is minimal for $\beta = \hat{\beta}$, where
+
+$$
+\hat{\beta} = (X^TX)^{-1}Xy
+$$
+
+and therefore
+
+$$
+X^TX\hat{\beta} = X^Ty
+$$ {#eq-SSR-solution}
+
+Now let's look at what an equivalent of @eq-PRSS-eq would be. Probably something like
+
+$$
+\lVert y - X\beta \rVert^2  = \lVert y - X\hat{\beta} \rVert^2 + \lVert ???\rVert^2
+$$
+
+and we have to figure out what the question marks would stand for.
+
+So let's go! From the definition of the euclidian norm, we have:
+
+$$
+\begin{align}
+  \lVert y - X\beta \rVert^2  - \lVert y - X\hat{\beta} \rVert^2
+    &= (y - X\beta)^T(y - X\beta) - (y - X\hat{\beta})^T(y - X\hat{\beta})\\
+    &=
+      \begin{aligned}[t]
+           & y^Ty - y^TX\beta - (X\beta)^Ty +(X\beta)^TX\beta\\
+         - & y^Ty + y^TX\hat{\beta} + (X\hat{\beta})^Ty -(X\hat{\beta})^TX\hat{\beta}
+      \end{aligned}\\
+    &= 
+      \begin{aligned}[t]
+           & - y^TX\beta - \beta^TX^Ty +\beta^TX^TX\beta\\
+           & + y^TX\hat{\beta} + \hat{\beta}^TX^Ty - \hat{\beta}^TX^TX\hat{\beta}
+      \end{aligned}
+\end{align}
+$$
+
+using @eq-SSR-solution, we have $X^Ty=X^TX\hat{\beta}$ and therefore also $y^TX=\hat{\beta}^TX^TX$, so
+
+$$
+\begin{align}
+  \phantom{\lVert y - X\beta \rVert^2  - \lVert y - X\hat{\beta} \rVert^2}
+    &= 
+      \begin{aligned}[t]
+        & - \hat{\beta}^TX^TX\beta - \beta^TX^TX\hat{\beta} +\beta^TX^TX\beta\\
+        & + \hat{\beta}^TX^TX\hat{\beta} + \hat{\beta}^TX^TX\hat{\beta} - \hat{\beta}^TX^TX\hat{\beta}
+      \end{aligned}\\
+    &= \hat{\beta}^TX^TX(\hat{\beta}-\beta) - \beta^TX^TX(\hat{\beta}-\beta) \\
+    &= (\hat{\beta}-\beta)^TX^TX(\hat{\beta}-\beta)\\
+    &= \lVert X(\hat{\beta}-\beta)\rVert^2
+\end{align}
+$$ {#eq-OLS-proof}
+
+Whichs gives us
+
+$$
+\lVert y - X\beta \rVert^2  = \lVert y - X\hat{\beta} \rVert^2 + \lVert X(\hat{\beta}-\beta)\rVert^2
+$$ {#eq-OLS-sol}
+
+
+This looks very much like @eq-PRSS-eq! Now we only need a tiny bit of work to go back to our PRSS. For that, we will actually not use @eq-OLS-sol but the second to last line of @eq-OLS-proof:
+
+$$
+\lVert y - X\beta \rVert^2  - \lVert y - X\hat{\beta} \rVert^2 = (\hat{\beta}-\beta)^TX^TX(\hat{\beta}-\beta)
+$$ {#eq-OLS-to-inject}
+
+## Cholesky and his friend
+
+One think I have skipped over previously is the meaning of the $L_{\theta}$ and $P$ symbols. These are both matrices that are used to optimize the computations needed to obtain $\tilde{u}$. To be more precise, since $\tilde{u}$ is a solution of @eq-OLS-star, the theory of OLS gives us that:
+
+$$
+({X^*}^TX^*)\tilde{u} = {X^*}^Ty
+$$
+
+Solving this linear system directly is computationally intensive, but in this case ${X^*}^TX^*$ is definite positive[^2] and it can be made more efficient using [Cholesky's decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition), which in this case amounts to find a lower triangular matrix $L_{\theta}$ such that
+
+$$
+P^TL_{\theta}L_{\theta}^TP = X^TX
+$$ {#eq-chol}
+
+where $P$ is a the permutation matrix obtained from a [(approximated) minimal degree algorithm](https://en.wikipedia.org/wiki/Minimum_degree_algorithm) to makes the decomposition process even more efficient[^3].
+
+[^2]: See the exercices at the end of chapter 5 in @bates2018Lme4MixedeffectsModeling to see why it can be guaranteed in non-made up scenarios.
+[^3]: See @ingram2006MinimumDegreeReordering for a good intro to this.
+
+## Wrap up
+
+We have all the ingredients we need, let's just plug @eq-chol into @eq-OLS-to-inject:
+
+$$
+\begin{align}
+  \lVert y - X\beta \rVert^2  - \lVert y - X\hat{\beta} \rVert^2
+    &= (\hat{\beta}-\beta)^TX^TX(\hat{\beta}-\beta)\\
+    &= (\hat{\beta}-\beta)^TP^TL_{\theta}L_{\theta}^TP(\hat{\beta}-\beta)\\
+    &= \left[L_{\theta}^TP(\hat{\beta}-\beta)\right]^T\left[L_{\theta}^TP(\hat{\beta}-\beta)\right]\\
+    &= \lVert L_{\theta}^TP(\hat{\beta}-\beta)\rVert^2
+\end{align}
+$$
+
+which proves @eq-PRSS-eq.
+
+## Further reading
+
+- As I said at the top @bates2018Lme4MixedeffectsModeling is a really good work, which I recommend if you want to understand the inner workings of lme4 in depth. I will probably write more about the points I found interesting or confusing in upcoming posts.
+- In general, I recommend the articles of the English Wikipedia on these topics, which are usually good and provide good references if you want to delve into the technicalities. See in particular @2022ProofsInvolvingOrdinary.
+- As a reference for linear models, I recommend @rao2007LinearModelsGeneralizations, an extremely comprehensive — if dry — textbook.
+- Should you happen — as I did — to fall into a rabbit hole of “but why?!” regarding the probability theory tools used for these topics, I have to recommend my personal reference: @klenke2020ProbabilityTheoryComprehensive
+
+Have fun and see you next time!
