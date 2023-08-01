@@ -1,25 +1,26 @@
 ---
 title: "That pesky equation 5.25"
 author: "Loïc Grobol"
-date: "2023-07-30"
-categories: [statistics, maths, R]
+date: "2023-08-01"
+categories: [statistics, maths, R, linear algebra]
 image: "image.jpg"
 image-alt: "A view of Times Square."
+bibliography: biblio.bib
 ---
 
 ![](image.jpg){fig-alt="A view of Times Square."}
-&
+
 *A cute property of Penalized Least Squares that took me more work than I'm comfortable disclosing.*
 
 <small>*Header by <a href="https://commons.wikimedia.org/wiki/File:New_york_times_square-terabass.jpg">Terabass</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>, via Wikimedia Commons*</small>
 
-I'm currently reading Douglas M. Bates' “lme4: Mixed-effects modeling with R” (the latest version, which for some reason seems only available from [someone at ETH Zurich's personal stash](https://stat.ethz.ch/~maechler/MEMo-pages/lMMwR.pdf)). It's generally well written and I have learned a lot, but I find it a bit too terse in some places, with unclear jumps in the reasoning or computations. One such jump is equation 5.25:
+I'm currently reading Douglas M. Bates' “lme4: Mixed-effects modeling with R” (@bates2018Lme4MixedeffectsModeling, the latest version, which for some reason seems only available from [someone at ETH Zurich's personal stash](https://stat.ethz.ch/~maechler/MEMo-pages/lMMwR.pdf)). It's generally well written and I have learned a lot, but I find it a bit too terse in some places, with unclear jumps in the reasoning or computations. One such jump is equation 5.25:
 
 $$
 \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2 + \lVert u\rVert^2 = r_{\theta,\beta}^2 + \lVert L_{\theta}^TP(u-\tilde{u}])\rVert^2
 $$ {#eq-PRSS-eq}
 
-I have had inordinate troubles understanding how the author arrived at this, so for the benefit of (at least) the futures versions of myself who will have forgotten this, I will try to fill the gaps.
+I have had inordinate troubles understanding how the author arrived at this, so for the benefit of (at least) the futures versions of myself who will have forgotten this, I will try to fill the gaps, leaving as little impliciteness as possible.
 
 ## Problem statement
 
@@ -139,4 +140,61 @@ $$
     &= (\hat{\beta}-\beta)^TX^TX(\hat{\beta}-\beta)\\
     &= \lVert X(\hat{\beta}-\beta)\rVert^2
 \end{align}
+$$ {#eq-OLS-proof}
+
+Whichs gives us
+
 $$
+\lVert y - X\beta \rVert^2  = \lVert y - X\hat{\beta} \rVert^2 + \lVert X(\hat{\beta}-\beta)\rVert^2
+$$ {#eq-OLS-sol}
+
+
+This looks very much like @eq-PRSS-eq! Now we only need a tiny bit of work to go back to our PRSS. For that, we will actually not use @eq-OLS-sol but the second to last line of @eq-OLS-proof:
+
+$$
+\lVert y - X\beta \rVert^2  - \lVert y - X\hat{\beta} \rVert^2 = (\hat{\beta}-\beta)^TX^TX(\hat{\beta}-\beta)
+$$ {#eq-OLS-to-inject}
+
+## Cholesky and his friend
+
+One think I have skipped over previously is the meaning of the $L_{\theta}$ and $P$ symbols. These are both matrices that are used to optimize the computations needed to obtain $\tilde{u}$. To be more precise, since $\tilde{u}$ is a solution of @eq-OLS-star, the theory of OLS gives us that:
+
+$$
+({X^*}^TX^*)\tilde{u} = {X^*}^Ty
+$$
+
+Solving this linear system directly is computationally intensive, but in this case ${X^*}^TX^*$ is definite positive[^2] and it can be made more efficient using [Cholesky's decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition), which in this case amounts to find a lower triangular matrix $L_{\theta}$ such that
+
+$$
+P^TL_{\theta}L_{\theta}^TP = X^TX
+$$ {#eq-chol}
+
+where $P$ is a the permutation matrix obtained from a [(approximated) minimal degree algorithm](https://en.wikipedia.org/wiki/Minimum_degree_algorithm) to makes the decomposition process even more efficient[^3].
+
+[^2]: See the exercices at the end of chapter 5 in @bates2018Lme4MixedeffectsModeling to see why it can be guaranteed in non-made up scenarios.
+[^3]: See @ingram2006MinimumDegreeReordering for a good intro to this.
+
+## Wrap up
+
+We have all the ingredients we need, let's just plug @eq-chol into @eq-OLS-to-inject:
+
+$$
+\begin{align}
+  \lVert y - X\beta \rVert^2  - \lVert y - X\hat{\beta} \rVert^2
+    &= (\hat{\beta}-\beta)^TX^TX(\hat{\beta}-\beta)\\
+    &= (\hat{\beta}-\beta)^TP^TL_{\theta}L_{\theta}^TP(\hat{\beta}-\beta)\\
+    &= \left[L_{\theta}^TP(\hat{\beta}-\beta)\right]^T\left[L_{\theta}^TP(\hat{\beta}-\beta)\right]\\
+    &= \lVert L_{\theta}^TP(\hat{\beta}-\beta)\rVert^2
+\end{align}
+$$
+
+which proves @eq-PRSS-eq.
+
+## Further reading
+
+- As I said at the top @bates2018Lme4MixedeffectsModeling is a really good work, which I recommend if you want to understand the inner workings of lme4 in depth. I will probably write more about the points I found interesting or confusing in upcoming posts.
+- In general, I recommend the articles of the English Wikipedia on these topics, which are usually good and provide good references if you want to delve into the technicalities. See in particular @2022ProofsInvolvingOrdinary.
+- As a reference for linear models, I recommend @rao2007LinearModelsGeneralizations, an extremely comprehensive — if dry — textbook.
+- Should you happen — as I did — to fall into a rabbit hole of “but why?!” regarding the probability theory tools used for these topics, I have to recommend my personal reference: @klenke2020ProbabilityTheoryComprehensive
+
+Have fun and see you next time!
