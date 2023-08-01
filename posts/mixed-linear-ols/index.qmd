@@ -77,11 +77,11 @@ $$ {#eq-OLS-star}
 
 and $(\tilde{u}, r_{\theta, \beta}^2)$ must there also be a solution of @eq-OLS-star.
 
-Note that @eq-OLS-star is not just any OLS problem: $y^*$ and $X^*$ have very specific properties that *could* be necessary to obtain @eq-PRSS-eq. But it actually turns out that they aren't and @eq-PRSS-eq is actually a property of OLS problems in general.
+Note that @eq-OLS-star is not just any OLS problem: $y^*$ and $X^*$ have very specific properties that *could* be necessary to obtain @eq-PRSS-eq. But it actually turns out that they aren't and @eq-PRSS-eq is a property of OLS problems in general.
 
 ## A property of ordinary least squares problems
 
-Let's take a step back and conssider a general OLS problem
+Let's take a step back and consider a general OLS problem
 
 $$
 Y = X\beta + \varepsilon
