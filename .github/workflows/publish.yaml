@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-pages-artifact@v2
         with:
           # Upload site
-          path: 'blog'
+          path: '_site'
 
 # Deploy job
   deploy:
