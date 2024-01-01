@@ -5,6 +5,7 @@ project:
 website:
   title: "Notes from Ys and elsewhere"
   repo-url: "https://github.com/LoicGrobol/notes-from-ys"
+  open-graph: true
   reader-mode: true
   back-to-top-navigation: true
   navbar:
@@ -19,6 +20,8 @@ format:
       - quartz
       - custom.scss
     css: styles.css
+    code-block-background: true
+    highlight-style: monokai
 
 editor: visual
 

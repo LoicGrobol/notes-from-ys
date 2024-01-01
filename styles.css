@@ -1,1 +1,9 @@
 /* css styles */
+
+#quarto-back-to-top{
+    color: var(--bs-white);
+}
+
+code{
+    color: var(--bs-white);
+}

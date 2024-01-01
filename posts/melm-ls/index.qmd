@@ -10,7 +10,7 @@ bibliography: biblio.bib
 
 ![](image.jpg){fig-alt="A view of Times Square."}
 
-*A cute property of Penalized Least Squares that took me more work than I'm comfortable disclosing.*
+*A cute property of Penalized Least Squares that took  me more work than I'm comfortable disclosing.*
 
 <small>*Header by <a href="https://commons.wikimedia.org/wiki/File:New_york_times_square-terabass.jpg">Terabass</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>, via Wikimedia Commons*</small>
 
@@ -175,7 +175,7 @@ $$
 P^TL_{\theta}L_{\theta}^TP = {X^*}^TX^*
 $$ {#eq-chol}
 
-where $P$ is a the permutation matrix obtained from a [(approximated) minimal degree algorithm](https://en.wikipedia.org/wiki/Minimum_degree_algorithm) to makes the decomposition process even more efficient[^3].
+where $P$ is a the permutation matrix obtained from a [(approximated) minimal degree algorithm](https://en.wikipedia.org/wiki/Minimum_degree_algorithm) to make the decomposition process even more efficient[^3].
 
 [^2]: See the exercices at the end of chapter 5 in @bates2018Lme4MixedeffectsModeling to see why it can be guaranteed in non-made up scenarios.
 [^3]: See @ingram2006MinimumDegreeReordering for a good intro to this.

@@ -1,0 +1,40 @@
+---
+title: "What I learned trying to speed up bayesian gaussian mixture models"
+author: "Loïc Grobol"
+date: "2024-01-01"
+categories: [statistics, maths, Python, Pytorch, scikit-learn]
+image: "image.jpg"
+image-alt: "Mixture for herbal tea on Egyptian Market (Spice Bazaar) in Istanbul - various dried fruits."
+bibliography: biblio.bib
+---
+
+[![](image.jpg){fig-alt="Mixture for herbal tea on Egyptian Market (Spice Bazaar) in Istanbul - various dried fruits."}](https://commons.wikimedia.org/wiki/File:Mixture_for_herbal_tea_04.jpg)
+
+*Who doesn't love falling into rabbit holes?*
+
+- Implementing $\log\mathrm{Β}(x, y)$ as $\log⁡\Gamma(x)+\log⁡⁡\Gamma(y)−\log⁡⁡\Gamma(x+y)$ has stability issues. So far there's really better way in [Pytorch](https://github.com/pytorch/pytorch/issues/678#issuecomment-1872585761), but it's far from parity with [`scipy.special.betaln`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.betaln.html), which [implements](https://github.com/scipy/scipy/blob/ae3ca70a72ef04547fbc28501009246cef5ee6c8/scipy/special/cdflib/betaln.f) `BETALN` from @didonato1992Algorithm708Significant (although I have not found a citation for it there).
+  - [NAG](support.nag.com/numeric/nl/nagdoc_latest/clhtml/s/s14cbc.html)'s doc has a nice summary of the algorithm (but sadly no open source implementation).
+  - So far I'm using scipy's implementation although it requires casting Pytorch tensors to Numpy, and if they are on GPU, to bring them back to RAM. Maybe one day the array API will remove the need for that.
+- Scikit-Learn's [gaussian mixture models](https://scikit-learn.org/stable/modules/mixture.html), both bayesian and not silently use `float64` (or whatever the machine's native float is) during their operations, leading to results that are different (sometimes inconsequentially, sometimes not) from what you'd expect.
+  - For instance [when estimating the covariances](https://github.com/scikit-learn/scikit-learn/blob/3f89022fa04d293152f1d32fbc2a5bdaaf2df364/sklearn/mixture/_gaussian_mixture.py#L174) in the `full` case, the covariance matrix is initialized without explicit dtype, so it will be native floats, no matter what the dtype of `X` is.
+- The performances of `np.einsum` vs `torch.einsum` with and without using `opt_einsum`'s optimization vs the directly writing out matrices products in the `einsum(li, lij, lik -> ljk, a, b, b)` case are really not intuitive. This would be worth a post in itself
+  - Pytorch's einsum is always faster than Numpy's einsum.
+  - Pytorch's einsum is much faster (almost a factor $10$) with `torch.backends.opt_einsum.enabled = False` but it's hard to set because of [a bug](https://discuss.pytorch.org/t/attributeerror-module-torch-backends-has-no-attribute-opt-einsum).
+  - Writing the procuts by hand in torch is about as fast a einsum. It looks like this:
+
+   ```python
+   covariances = torch.matmul(
+       (resp.T.unsqueeze(-1) * diff).transpose(-2, -1), diff
+   )
+   ```
+  - But writing the same in numpy is again 2× faster. Unless you force a copy to make the intermediary product contiguous:
+
+   ```python
+   covariances = torch.matmul(
+        (resp.T.unsqueeze(-1).contiguous() * diff).transpose(-2, -1), diff
+    )
+    ```
+
+    This last one is the fastest option.
+
+*Header image: Miomir Magdevski, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0), via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Mixture_for_herbal_tea_04.jpg).*
