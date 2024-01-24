@@ -39,7 +39,7 @@ $E$ measures the overall error made by the network on the training dataset for a
 There are many algorithms for that, but for neural networks, most of the time, an efficient (possibly approximate) solution to this problem is to use a gradient-based algorithm, most commonly a variant of the Stochastic Gradient Descent algorithm (SGD). These algorithms have (obviously) one thing in common: they require to compute the gradient of the per-sample losses with respect to $θ$. In other words, for all $(X, y)∈\mathcal{D}$, we need to be able to compute the gradient of the per-sample error function
 
 $$
-∇_θ~e_{(X, y)}(θ) =  ∇_θ~\operatorname{loss}(\operatorname{net}_θ(X), y)
+∇_{\!θ}~e_{(X, y)}(θ) =  ∇_θ~\operatorname{loss}(\operatorname{net}_θ(X), y)
 $$
 
 ## Notations
@@ -127,13 +127,13 @@ In other words, using a recursive definition:
 $$
 \left\lbrace
 \begin{aligned}
-	Z^1 &= W^1×X\\
+	O^0 &= X\\
+	Z^ℓ &= W^{ℓ}×O^{ℓ-1} & \text{for $1 ⩽ ℓ ⩽ N-1$}\\
 	O^ℓ &= φ(Z^ℓ) & \text{for $1 ⩽ ℓ ⩽ N-1$}\\
-	Z^{ℓ+1} &= W^{ℓ+1}×O^ℓ & \text{for $1 ⩽ ℓ ⩽ N-1$}\\
-	\hat{y} &= Z^N
+	\hat{y} &= Z^N\\
 \end{aligned}
 \right.
-$$
+$$ {#eq-def-z-o}
 
 And that's it! **Now** we have all we need.
 
@@ -142,7 +142,7 @@ And that's it! **Now** we have all we need.
 Remember: our problem here is to compte the gradient of the per-sample error function with respect to the parameters of the network.
 
 $$
-∇_θ~e_{(X, y)}(θ) =  ∇_θ~\operatorname{loss}(\operatorname{net}_θ(X), y)
+∇_{\!θ}~e_{(X, y)}(θ) =  ∇_θ~\operatorname{loss}(\operatorname{net}_θ(X), y)
 $$
 
 With our notations, the parameters of the networks are the elements of the weight matrices. Therefore:
@@ -154,7 +154,7 @@ $$
 So, using the definition of the gradient, we have for all $(X, y)$,
 
 $$
-∇_θ~e_{(X, y)}(θ) =
+∇_{\!θ}~e_{(X, y)}(θ) =
 	\begin{pmatrix}
 		\frac{∂e_{(X, y)}}{∂w^1_{1,1}}\\
 		⋮\\
@@ -167,10 +167,160 @@ $$
 In order to make it easier on the eyes, we'll simplify the notation a bit and write that
 
 $$
-∇~e(θ) = \left(\frac{∂e}{∂w^ℓ_{i,j}}\right)_{ℓ, i, j}
+∇\,e(θ) = \left(\frac{∂e}{∂w^ℓ_{i,j}}\right)_{ℓ, i, j}
 $$
 
 since none of these symbols should be ambiguous.
 
 Great news! That means that in order to arrive to our ends (train a neural network, remember), all we need is to be able to compute the value of $\frac{∂e}{∂w^ℓ_{i,j}}$ for any appropriate $ℓ$, $i$ and $j$.
 
+In general this is a hard problem, both in terms of human-powered symbolic derivation and of computer-power numeric computations. The main reason is that while the influence of one weight on the output of its layer is fairly simple, its influence on the output of the following layers gets gradually more complicated.
+
+Fortunately, we have one great tool — the chain rule — and one angle of attack — there is no backward connexion in neural networks.
+
+More concretely, from the notations defined in @eq-def-z-o:
+
+$$
+\left\lbrace
+\begin{aligned}
+	e &= f_N(f_{N-1}(… f_{ℓ+1}(O^ℓ)…))\\
+	Z^ℓ &= W^ℓ×O^{ℓ-1}\\
+	O^ℓ &= φ(Z^ℓ)\\
+\end{aligned}
+\right.
+$$ {#eq-link-o-z-w}
+
+Therefore, using the chain rule[^chain_rule]:
+
+$$
+\begin{align}
+\frac{∂e}{∂w^ℓ_{i,j}} 
+	&=
+		\left\langle
+			∇_{\!O^ℓ}\,e
+		\middle|
+			\frac{∂O^ℓ}{∂w^ℓ_{i,j}}
+		\right\rangle\\
+	&\stackrel{\mathrm{def}}{=}
+		\left\langle
+			∇_{\!O^ℓ}\,e
+		\middle|
+			\begin{pmatrix}
+				\frac{∂o^ℓ_1}{∂w^ℓ_{i,j}}\\
+				⋮\\
+				\frac{∂o^ℓ_{d_ℓ}}{∂w^ℓ_{i,j}}\\
+			\end{pmatrix}
+		\right\rangle\\
+	&= \sum_k \frac{∂e}{∂o^ℓ_k}\frac{∂o^ℓ_k}{∂w^ℓ_{i,j}}\\
+\end{align}
+$$ {#eq-de-dw-def}
+
+where $⟨⋅|⋅⟩$ is the scalar product.
+
+[^chain_rule]: To be precise: the version of the chaine rule for $h=g∘f$, where $f: ℝ\longrightarrow ℝ^n$ and $g: ℝ^n\longrightarrow ℝ$. In that case:
+$$
+h'(t) =
+	\left\langle
+		∇_{\!f(t)}\,g(f(t))~
+	\middle|~
+		f'(t)
+	\right\rangle
+$$
+Which is itself simply a special case of the chain rule for vector-valued functions with vector inputs:
+$$
+J_v(g∘f) = J_{f(v)}(g) × J_v(f)
+$$
+where $J$ is the Jacobian operator.
+
+But we know from @eq-link-o-z-w that for all $k$, $o^ℓ_k=φ(z^ℓ_k)$, so, using the chain rule,
+
+$$
+\begin{align}
+	\frac{∂o^ℓ_k}{∂w^ℓ_{i,j}}
+		&= \frac{∂φ(z^ℓ_k)}{∂w^ℓ_{i,j}}\\
+		&= \frac{∂φ(z^ℓ_k)}{∂z^ℓ_k}\frac{∂z^ℓ_k}{∂w^ℓ_{i,j}}\\
+		&= φ'(z^ℓ_k)\frac{∂z^ℓ_k}{∂w^ℓ_{i,j}}
+\end{align}
+$$ {#eq-do-dw}
+
+
+
+Moreover, using @eq-link-o-z-w and the definition of the matrix-vector product,
+
+$$
+z^ℓ_k = \sum_m w^ℓ_{k,m}o^{ℓ-1}_m
+$$
+
+And therefore we have
+
+$$
+\begin{aligned}
+	\frac{∂z^ℓ_k}{∂w^ℓ_{i,j}}
+		&= \frac{∂}{∂w^ℓ_{i,j}} \left(\sum_m w^ℓ_{k,m}o^{ℓ-1}_m\\\right)\\
+		&= \sum_m \frac{∂}{∂w^ℓ_{i,j}}(w^ℓ_{k,m}o^{ℓ-1}_m)
+\end{aligned}
+$$ {#eq-dz-dw-sum}
+
+**But** in our neural network, there is no back-connection: the weights of a layer don't have any influence on the output of the previous layer. Therefore $o^{ℓ-1}_m$ is does not depend on any $w^ℓ_{k,m}$ and
+
+$$
+\frac{∂}{∂w^ℓ_{i,j}}(w^ℓ_{k,m}o^{ℓ-1}_m) = 
+	\begin{dcases*}
+		o^{ℓ-1}_j & if $(k, m) = (i, j)$\\
+		0 & otherwise
+	\end{dcases*}
+$$ {#eq-dwo-dw}
+
+Plugging @eq-dwo-dw into @eq-dz-dw-sum, since the terms of the sum where $m≠j$ are all $0$ we get:
+
+$$
+\frac{∂z^ℓ_k}{∂w^ℓ_{i,j}} =
+	\begin{dcases*}
+		o^{ℓ-1}_j & if $k = i$\\
+		0 & otherwise
+	\end{dcases*}
+$$ {#eq-dz-dw}
+
+Similarly, if we plug @eq-do-dw, then @eq-dz-dw into @eq-de-dw-def, since the terms of the sum where $k≠i$ are all $0$ we get:
+
+$$
+\begin{align}
+	\frac{∂e}{∂w^ℓ_{i,j}}
+		&= \sum_k \frac{∂e}{∂o^ℓ_k}\frac{∂o^ℓ_k}{∂w^ℓ_{i,j}}\\
+		&= \sum_k \frac{∂e}{∂o^ℓ_k}\,φ'(z^ℓ_k)\,\frac{∂z^ℓ_k}{∂w^ℓ_{i,j}}\\
+		&= \frac{∂e}{∂o^ℓ_i}\,φ'(z^ℓ_i)\,o^{ℓ-1}_j\\
+\end{align}
+$$
+
+All that's left to compute is $\frac{∂e}{∂o^ℓ_i}$. Let's take a samll step back and consider what that quantity is:
+
+- $o^ℓ_i$ is the $i$-th coordinate of $O^ℓ$: the output of the $ℓ$-th layer.
+- $e$ is the error.
+- $\frac{∂e}{∂o^ℓ_i}$ is the $i$-th coordinate of $∇_{\!O^ℓ}\,e$: the gradient of the error with respect to the output of the $ℓ$-th layer.
+
+There is a special case here for $ℓ=N$: $O^N$ is $\hat{y}$, the output of our network and we have $e=\operatorname{loss}(\hat{y}, y)$, so:
+
+$$
+\begin{aligned}
+	\frac{∂e}{∂o^N_i}
+		&= \frac{∂}{∂o^N_i}\operatorname{loss}(\hat{y}, y)\\
+		&=  \frac{∂}{∂\hat{y}_i}\operatorname{loss}(\hat{y}, y)
+\end{aligned}
+$$
+
+And that's usually easy enough to compute[^nll-loss-deriv], since the derivatives of the loss function are usually well-known.
+
+[^nll-loss-deriv]: For instance if the loss is the negative $\log$-likelihood applied on a softmax and $y=c$, with $1 ⩽ c ⩽ d_N$:
+$$
+\begin{align}
+	\frac{∂}{∂\hat{y}_i}\operatorname{loss}(\hat{y}, y)
+		& = \frac{∂}{∂\hat{y}_i}\Big(-\hat{y}_c + \operatorname{log sum exp}(\hat{y})\Big)\\
+		&= 
+			\begin{dcases*}
+				-1 + \frac{\operatorname{e}^{\hat{y}_c}}{\sum_j \operatorname{e}^{\hat{y}_j}} & if $i=c$\\
+				\frac{\operatorname{e}^{\hat{y}_i}}{\sum_j \operatorname{e}^{\hat{y}_j}} & otherwise
+			\end{dcases*}\\
+		&= \operatorname{softmax}(\hat{y})_i -𝟙_{i=c}
+\end{align}
+$$
+For numerical stability reasons, this is usually evaluated by first computing the $\operatorname{log softmax}$ of $y$, from which it is easy to compute both the $\log$-likelihood and the $\operatorname{softmax}$ that appears in the last line of this derivation.

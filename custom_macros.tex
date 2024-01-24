@@ -1,0 +1,9 @@
+\usepackage{xparse}
+
+% https://tex.stackexchange.com/a/470157
+\NewDocumentCommand{\grad}{e{_^}}{%
+  \mathop{}\! % \mathop for good spacing before \nabla
+  \nabla
+  \IfValueT{#1}{_{\!#1}} % tuck in the subscript
+  \IfValueT{#2}{^{#2}} % possible superscript
+}
