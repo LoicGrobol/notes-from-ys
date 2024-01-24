@@ -1,0 +1,176 @@
+---
+title: "So you want to backpropagate"
+author: "Loïc Grobol"
+date: "2024-01-24"
+categories: [maths, neural networks, machine learning, optimisation, algorithm]
+image: "image.jpg"
+image-alt: "Image of rat primary cortical neurons in culture."
+bibliography: biblio.bib
+---
+
+![](image.jpg){fig-alt="Image of rat primary cortical neurons in culture"}
+
+*Backpropagation made right for a certain value of right.*
+
+<small>*Header by <a href="https://flickr.com/photos/zeissmicro/30614937102/">ZEISS Microscopy</a>, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>, via Flickr*</small>
+
+I have just taught the SGD algorithm with backpropagation to my NLP masters student and, as every year, I found that no explanation of it on the web looks satisfying to me. As the saying goes “*on est jamais mieux servi⋅e que par soi-même*”, so I figured I'd better get one. In the worst case, it'll be useful for a future version of me (hi mate!).
+
+Backpropagation is a very frustrating topic. At its core, it's nothing very complicated and you never need more than relatively basic Bachelor-level maths (a bit of linear algebra, a bit of multivariate calculus). On the other hand it does involve the manipulation of many objects simultaneously, making it hard to keep everything in mind simultaneously, and even to write down the process, due to the sheer number of quantities involved. I am doing the best I can, but I realise that it can be easy to get bogged down. I can only offer a few words of advice:
+
+- We will split the problem in several smaller problems. Only focus on one of them at a time.
+- Trust the process.
+- When you have fully understood all the small parts, only then put them back together.
+
+I **hate** doing things this way and I am not good at it at all, but in my experience, it's the best way to get around this little frustating piece of knowledge.
+
+## Problem formulation
+
+We want to optimise a neural network, i.e. to find the weights that minimize the loss on a train dataset. Formally, consider the error function:
+
+$$
+E(θ) = \sum_{(X, y)∈\mathcal{D}}\operatorname{loss}(\operatorname{net}_θ(X), y)
+$$
+
+where $\operatorname{net}_θ$ is the function implemented by the neural network when its weights are $θ$, $\operatorname{loss}$ is the chosen per-sample loss and $\mathcal{D}=\{(X_1, y_1), …, (X_n, y_n)\}$ is the training dataset.
+
+$E$ measures the overall error made by the network on the training dataset for a given parameter vector $θ$. In this context “training” the network means finding a value for $θ$ such that $E(θ)$ is minimal.
+
+There are many algorithms for that, but for neural networks, most of the time, an efficient (possibly approximate) solution to this problem is to use a gradient-based algorithm, most commonly a variant of the Stochastic Gradient Descent algorithm (SGD). These algorithms have (obviously) one thing in common: they require to compute the gradient of the per-sample losses with respect to $θ$. In other words, for all $(X, y)∈\mathcal{D}$, we need to be able to compute the gradient of the per-sample error function
+
+$$
+∇_θ~e_{(X, y)}(θ) =  ∇_θ~\operatorname{loss}(\operatorname{net}_θ(X), y)
+$$
+
+## Notations
+
+> We are embarking on a journey with a lot of variables. Absurdly many variables. I'm trying my
+> best to use as few as possible and to keep the notations as clear as I can but I'm still not very
+> satisfied about it. If you can think of improvements, please let me know !
+
+Let's assume that we have a neural network with $N$ fully connected layers and using a non-linearity $φ$. Given an input $X$, that network will compute an output $\hat{y}$ as:
+
+$$
+\hat{y} = f_N(f_{N-1}(… f_1(X)…))
+$$
+
+Or equivalently
+
+$$
+\hat{y} = (f_N∘f_{N-1}∘…∘f_1)(X)
+$$
+
+Where $f_ℓ$ is a *fully connected neural layer* (hence $ℓ$): a function of the form
+
+$$
+\left\lvert
+	\begin{array}{rrl}
+		f_ℓ:~& ℝ^{d_{ℓ-1}} \longrightarrow & ℝ^{d_ℓ}\\
+			 & U \longmapsto & f_ℓ(U) = φ(Z) \stackrel{\mathrm{def}}{=} \begin{pmatrix}φ(z_1)\\⋮\\φ(z_r)\end{pmatrix}
+	\end{array}
+\right.
+$$
+
+Where
+
+$$
+Z = W^ℓ×U
+$$
+
+$W^ℓ∈\mathcal{Mat}(ℝ^{d_ℓ}, ℝ^{d_{ℓ-1}})$ being the weight matrix of $ℓ$-th layer. We will also use the following notation for the weights of $W^ℓ$
+
+$$
+W^i =
+  \begin{pmatrix}
+	w^ℓ_{1,1} & … & w^ℓ_{1, d_{ℓ-1}}\\
+	⋮        &   & ⋮\\
+	 w^ℓ_{d_ℓ,1} & … & w^ℓ_{d_ℓ, d_{ℓ-1}}\\
+  \end{pmatrix}
+$$
+
+> In theory, of course, $W^ℓ$ could also be the $ℓ$-th power of $W$, so the notation I use here is
+> ambiguous. On the other hand, we do need to put that indice somewhere and it's a convenient place.
+> In any case, we won't use any power of anything in this section, so let's agree that it's ok.
+
+> Note that in general, neural layers are biased : of the form $f(U) = φ(W×U + b)$. We will see
+> later why this is makes no difference. For now, let's assume that our layers have no bias, it will
+> makes our computations easier to follow.
+
+So to sum it up, our neural network is defined by
+
+- The sequence $(d_0, d_1, …, d_N)$ of the dimensions of its layers. $d_0$ is the dimension of the input, and for all $ℓ⩾0$, $d_ℓ$ is the dimension of the $ℓ$-th layer.
+- The weight matrices $(W^1, …, W^N)$, where $W^ℓ$ is of dimension $d_ℓ$ rows by $d_{ℓ-1}$ columns.
+- The non-linearity $φ$. We will assume that it's used for every layer except the last, i.e. $f_N(U) = W^N×U$. It will simplify things a bit and it's consistent with the general practice of using a specific non-linearity tied to the loss for the last layer (usually a softmax, that is mean to be used with the negative log-likelihood loss).
+
+And we have:
+
+$$
+\hat{y} =
+	W^N × \underbrace{φ(
+		\underbrace{W^{N-1} ×
+			φ(
+				…
+				× \underbrace{φ(\underbrace{W^1×X}_{Z^1})}_{O^1}…
+			)
+		}_{Z^{N-1}}
+	)}_{O^{N-1}}
+$$
+
+I have added yet a few more notations here:
+
+- $Z^ℓ=\begin{pmatrix}z^ℓ_1\\⋮\\z^ℓ_{d_ℓ}\end{pmatrix}$ is the intermediary output of the $ℓ$-th layer, just before applying 
+  the non-linearity.
+- $O^ℓ=\begin{pmatrix}o^ℓ_1\\⋮\\o^ℓ_{d_ℓ}\end{pmatrix}$ is the output of the $ℓ$-th layer (including the non-linearity).
+
+In other words, using a recursive definition:
+
+$$
+\left\lbrace
+\begin{aligned}
+	Z^1 &= W^1×X\\
+	O^ℓ &= φ(Z^ℓ) & \text{for $1 ⩽ ℓ ⩽ N-1$}\\
+	Z^{ℓ+1} &= W^{ℓ+1}×O^ℓ & \text{for $1 ⩽ ℓ ⩽ N-1$}\\
+	\hat{y} &= Z^N
+\end{aligned}
+\right.
+$$
+
+And that's it! **Now** we have all we need.
+
+## Backpropagation proper
+
+Remember: our problem here is to compte the gradient of the per-sample error function with respect to the parameters of the network.
+
+$$
+∇_θ~e_{(X, y)}(θ) =  ∇_θ~\operatorname{loss}(\operatorname{net}_θ(X), y)
+$$
+
+With our notations, the parameters of the networks are the elements of the weight matrices. Therefore:
+
+$$
+θ = (w^1_{1,1}, w^1_{1, 2}, …, w^ℓ_{i, j}, …, w^N_{d_N, d_{N-1}})
+$$
+
+So, using the definition of the gradient, we have for all $(X, y)$,
+
+$$
+∇_θ~e_{(X, y)}(θ) =
+	\begin{pmatrix}
+		\frac{∂e_{(X, y)}}{∂w^1_{1,1}}\\
+		⋮\\
+		\frac{∂e_{(X, y)}}{∂w^ℓ_{i,j}}\\
+		⋮\\
+		\frac{∂e_{(X, y)}}{∂w^N_{d_N, d_{N-1}}}\\
+	\end{pmatrix}
+$$
+
+In order to make it easier on the eyes, we'll simplify the notation a bit and write that
+
+$$
+∇~e(θ) = \left(\frac{∂e}{∂w^ℓ_{i,j}}\right)_{ℓ, i, j}
+$$
+
+since none of these symbols should be ambiguous.
+
+Great news! That means that in order to arrive to our ends (train a neural network, remember), all we need is to be able to compute the value of $\frac{∂e}{∂w^ℓ_{i,j}}$ for any appropriate $ℓ$, $i$ and $j$.
+
