@@ -80,7 +80,7 @@ $$
 $W^ℓ∈\mathcal{Mat}(ℝ^{d_ℓ}, ℝ^{d_{ℓ-1}})$ being the weight matrix of $ℓ$-th layer. We will also use the following notation for the weights of $W^ℓ$
 
 $$
-W^i =
+W^ℓ =
   \begin{pmatrix}
 	w^ℓ_{1,1} & … & w^ℓ_{1, d_{ℓ-1}}\\
 	⋮        &   & ⋮\\
@@ -137,7 +137,7 @@ $$ {#eq-def-z-o}
 
 And that's it! **Now** we have all we need.
 
-## Backpropagation proper
+## Doing it with numbers
 
 Remember: our problem here is to compte the gradient of the per-sample error function with respect to the parameters of the network.
 
@@ -174,7 +174,7 @@ since none of these symbols should be ambiguous.
 
 Great news! That means that in order to arrive to our ends (train a neural network, remember), all we need is to be able to compute the value of $\frac{∂e}{∂w^ℓ_{i,j}}$ for any appropriate $ℓ$, $i$ and $j$.
 
-In general this is a hard problem, both in terms of human-powered symbolic derivation and of computer-power numeric computations. The main reason is that while the influence of one weight on the output of its layer is fairly simple, its influence on the output of the following layers gets gradually more complicated.
+In general this is a problem that is not very hard, but very expensive, both in terms of human-powered symbolic derivation and of computer-powered numeric computations. The main reason is that while the influence of one weight on the output of its layer is fairly simple, its influence on the output of the following layers gets gradually more complicated.
 
 Fortunately, we have one great tool — the chain rule — and one angle of attack — there is no backward connexion in neural networks.
 
@@ -244,7 +244,6 @@ $$
 $$ {#eq-do-dw}
 
 
-
 Moreover, using @eq-link-o-z-w and the definition of the matrix-vector product,
 
 $$
@@ -264,35 +263,56 @@ $$ {#eq-dz-dw-sum}
 **But** in our neural network, there is no back-connection: the weights of a layer don't have any influence on the output of the previous layer. Therefore $o^{ℓ-1}_m$ is does not depend on any $w^ℓ_{k,m}$ and
 
 $$
-\frac{∂}{∂w^ℓ_{i,j}}(w^ℓ_{k,m}o^{ℓ-1}_m) = 
-	\begin{dcases*}
-		o^{ℓ-1}_j & if $(k, m) = (i, j)$\\
-		0 & otherwise
-	\end{dcases*}
+\begin{align}
+	\frac{∂}{∂w^ℓ_{i,j}}(w^ℓ_{k,m}o^{ℓ-1}_m)
+		&= 
+			\begin{dcases*}
+				o^{ℓ-1}_j & if $(k, m) = (i, j)$\\
+				0 & otherwise
+			\end{dcases*}\\
+		&= 𝟙_{(k, m) = (i, j)}⋅o^{ℓ-1}_j\\
+\end{align}
 $$ {#eq-dwo-dw}
+(where $𝟙_{(k, m) = (i, j)}$ is $1$ if $(k, m) = (i, j)$ and $0$ otherwise)
 
-Plugging @eq-dwo-dw into @eq-dz-dw-sum, since the terms of the sum where $m≠j$ are all $0$ we get:
+We plug @eq-dwo-dw into @eq-dz-dw-sum to get:
 
 $$
-\frac{∂z^ℓ_k}{∂w^ℓ_{i,j}} =
-	\begin{dcases*}
-		o^{ℓ-1}_j & if $k = i$\\
-		0 & otherwise
-	\end{dcases*}
+\begin{align}
+	\frac{∂z^ℓ_k}{∂w^ℓ_{i,j}}
+		&= \sum_m \frac{∂}{∂w^ℓ_{i,j}}(w^ℓ_{k,m}o^{ℓ-1}_m)\\
+		&= \sum_m 𝟙_{(k, m) = (i, j)}⋅o^{ℓ-1}_m\\
+		&= 𝟙_{k=i}⋅o^{ℓ-1}_j\\
+\end{align}
 $$ {#eq-dz-dw}
+since all the terms in the sum are $0$, except for $m=j$.
 
-Similarly, if we plug @eq-do-dw, then @eq-dz-dw into @eq-de-dw-def, since the terms of the sum where $k≠i$ are all $0$ we get:
+Similarly, if we plug @eq-do-dw, then @eq-dz-dw into @eq-de-dw-def, we get:
 
 $$
 \begin{align}
 	\frac{∂e}{∂w^ℓ_{i,j}}
 		&= \sum_k \frac{∂e}{∂o^ℓ_k}\frac{∂o^ℓ_k}{∂w^ℓ_{i,j}}\\
 		&= \sum_k \frac{∂e}{∂o^ℓ_k}\,φ'(z^ℓ_k)\,\frac{∂z^ℓ_k}{∂w^ℓ_{i,j}}\\
+		&= \sum_k \frac{∂e}{∂o^ℓ_k}\,φ'(z^ℓ_k)\,𝟙_{k=i}⋅o^{ℓ-1}_j\\
 		&= \frac{∂e}{∂o^ℓ_i}\,φ'(z^ℓ_i)\,o^{ℓ-1}_j\\
 \end{align}
 $$
 
-All that's left to compute is $\frac{∂e}{∂o^ℓ_i}$. Let's take a samll step back and consider what that quantity is:
+Let's box this last one:
+
+$$
+\boxed{
+	\frac{∂e}{∂w^ℓ_{i,j}}=\frac{∂e}{∂o^ℓ_i}\,φ'(z^ℓ_i)\,o^{ℓ-1}_j
+}
+$$ {#eq-de-dw-box}
+
+@eq-de-dw-box is important because at this point, we have no explicit $w^ℓ_{i,j}$ left. Instead what we have is:
+
+- $o^{ℓ-1}_j$, which has already been computed during the forward pass.
+- $φ'(z^ℓ_i)$, which is easy to compute if you know the derivative of $φ$, which we do, and $z^ℓ_i$, which we know because it has also been computed during the forward pass.
+
+All that's left to compute is $\frac{∂e}{∂o^ℓ_i}$, which is interesting because Let's take a small step back and consider what that quantity is:
 
 - $o^ℓ_i$ is the $i$-th coordinate of $O^ℓ$: the output of the $ℓ$-th layer.
 - $e$ is the error.
@@ -304,9 +324,9 @@ $$
 \begin{aligned}
 	\frac{∂e}{∂o^N_i}
 		&= \frac{∂}{∂o^N_i}\operatorname{loss}(\hat{y}, y)\\
-		&=  \frac{∂}{∂\hat{y}_i}\operatorname{loss}(\hat{y}, y)
+		&= \frac{∂}{∂\hat{y}_i}\operatorname{loss}(\hat{y}, y)
 \end{aligned}
-$$
+$$ {#eq-de-doni}
 
 And that's usually easy enough to compute[^nll-loss-deriv], since the derivatives of the loss function are usually well-known.
 
@@ -320,7 +340,94 @@ $$
 				-1 + \frac{\operatorname{e}^{\hat{y}_c}}{\sum_j \operatorname{e}^{\hat{y}_j}} & if $i=c$\\
 				\frac{\operatorname{e}^{\hat{y}_i}}{\sum_j \operatorname{e}^{\hat{y}_j}} & otherwise
 			\end{dcases*}\\
-		&= \operatorname{softmax}(\hat{y})_i -𝟙_{i=c}
+		&= \operatorname{softmax}(\hat{y})_i - 𝟙_{i=c}
 \end{align}
 $$
-For numerical stability reasons, this is usually evaluated by first computing the $\operatorname{log softmax}$ of $y$, from which it is easy to compute both the $\log$-likelihood and the $\operatorname{softmax}$ that appears in the last line of this derivation.
+For numerical stability reasons, this is usually evaluated by first computing the $\operatorname{log softmax}$ of $y$, from which it is easy to compute both the $\log$-likelihood (i.e. the loss) and the $\operatorname{softmax}$ that appears in the last line of this derivation of its gradient.
+
+Now what about the other values of $ℓ$? By definition of the network, we have
+
+$$
+e = \operatorname{loss}\mathopen{}\Big(f_N\big(…f_{ℓ+2}(O^{ℓ+1})…\big), y\Big)
+$$
+
+From the chain rule, we have
+
+$$
+\begin{align}
+\frac{∂e}{∂o^ℓ_i}
+	&=
+		\left\langle
+			∇_{\!O^{ℓ+1}}\,e
+		\middle|
+			\frac{∂O^{ℓ+1}}{∂o^ℓ_i}
+		\right\rangle\\
+	&= \sum_k \frac{∂e}{∂o^{ℓ+1}_k}\frac{∂o^{ℓ+1}_k}{∂o^ℓ_i}\\
+\end{align}
+$$ {#eq-de-doli}
+
+And one more application of the chain rule gives us
+
+$$
+\begin{align}
+	\frac{∂o^{ℓ+1}_k}{∂o^ℓ_i}
+		&= \frac{∂φ(z^{ℓ+1}_k)}{∂o^ℓ_i}\\
+		&= \frac{∂φ(z^{ℓ+1}_k)}{∂z^{ℓ+1}_k}\frac{∂z^{ℓ+1}_k}{∂o^ℓ_i}\\
+		&= φ'(z^{ℓ+1}_k)\frac{∂}{∂o^ℓ_i}\left(\sum_m w^{ℓ+1}_{k,m}o^ℓ_m\right)\\
+		&= φ'(z^{ℓ+1}_k)\sum_m w^{ℓ+1}_{k,m}\frac{∂}{∂o^ℓ_i}o^ℓ_m\\
+		&= φ'(z^{ℓ+1}_k)\sum_m w^{ℓ+1}_{k,m}⋅𝟙_{m=i}\\
+		&= φ'(z^{ℓ+1}_k)\,w^{ℓ+1}_{k,i}\\
+\end{align}
+$$ {#eq-dolpk-doli}
+
+And if we plug @eq-dolpk-doli into @eq-de-doli:
+
+$$
+\begin{align}
+\frac{∂e}{∂o^ℓ_i}
+	&= \sum_k \frac{∂e}{∂o^{ℓ+1}_k}\frac{∂o^{ℓ+1}_k}{∂o^ℓ_i}\\
+	&= \sum_k \frac{∂e}{∂o^{ℓ+1}_k}\,φ'(z^{ℓ+1}_k)\,w^{ℓ+1}_{k,i}\\
+\end{align}
+$$ {#eq-de-doli-back}
+
+And we're done!
+
+Why? Because we know all of the terms in that last sum:
+
+- $w^{ℓ+1}_{k,i}$ is just a weight, no need to compute anything.
+- We know $z^{ℓ+1}_k$ from the forward pass and we know the derivative of $φ$, so $φ'(z^{ℓ+1}_k)$ is not a problem.
+
+But do we know $\frac{∂e}{∂o^{ℓ+1}_k}$? We do for $ℓ=N-1$: from @eq-de-doni, it's $\frac{∂}{∂\hat{y}_i}\operatorname{loss}(\hat{y}, y)$.
+
+Therefore, we can compute $\frac{∂e}{∂o^{N-1}_i}$, frow which we can then compute $\frac{∂e}{∂o^{N-2}_i}$ and so on: we can *recursively* compute all the $\frac{∂e}{∂o^ℓ_i}$, **backward** from the last layer of the network.
+
+And **that** is why we call this *backpropagation*: for everything we have done up to this point, computing $\frac{∂e}{∂w^ℓ_{i,j}}$ could be done in parallel for any value of $ℓ$, $i$ and $j$, there was no dependency between the formulas. For @eq-de-doli-back, in contrast, we need $\frac{∂e}{∂o^{ℓ+1}_k}$ to compute $\frac{∂e}{∂o^ℓ_k}$. Therefore, we will need far less operations to compute $\frac{∂e}{∂w^ℓ_{i,j}}$ if we start from $ℓ=N$, the last layer of the network and work our way backward, as long as we keep track of the $\frac{∂e}{∂o^ℓ_k}$ that we have already computed.
+
+Just for fun, let's put everything together and write a summary formula: for all $ℓ$, $i$ and $j$,
+
+$$
+\left\lbrace
+\begin{aligned}
+	\frac{∂e}{∂w^ℓ_{i,j}}
+		&= \frac{∂e}{∂o^ℓ_i}\,φ'(z^ℓ_i)\,o^{ℓ-1}_j\\
+	\frac{∂e}{∂o^ℓ_i}
+		&= \sum_k \frac{∂e}{∂o^{ℓ+1}_k}\,φ'(z^{ℓ+1}_k)\,w^{ℓ+1}_{k,i}
+		& \text{if $1 ⩽ ℓ ⩽ N-1$}\\
+	\frac{∂e}{∂o^N_i}
+		&= \frac{∂}{∂\hat{y}_i}\operatorname{loss}(\hat{y}, y)\\
+\end{aligned}
+\right.
+$$
+
+## Doing it in matrices?
+
+Let's start over, but this time we'll stay at the vector/matrix level, without decomposing gradients into partial derivatives.
+
+$$
+\begin{align}
+∇_{\!W^ℓ}\,e 
+	&= \operatorname{J}_{W^ℓ}O^ℓ × ∇_{\!O^ℓ}\,e\\
+	&= \operatorname{J}_{W^ℓ}Z^ℓ × \operatorname{J}_{Z^ℓ}O^ℓ × ∇_{\!O^ℓ}\,e\\
+	&= O^ℓ × \operatorname{J}_{Z^ℓ}O^ℓ × ∇_{\!O^ℓ}\,e\\
+\end{align}
+$$
