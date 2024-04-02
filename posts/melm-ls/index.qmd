@@ -38,7 +38,7 @@ For brevity's sake, I will try to keep to the useful definitions, but here are s
   and
   
   $$
-    r_{\theta,\beta} = \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}\tilde{u}\rVert^2 + \lVert \tilde{u}\rVert^2
+    r_{\theta,\beta}^2 = \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}\tilde{u}\rVert^2 + \lVert \tilde{u}\rVert^2
   $$
 
 [^1]: $u$ is not *really* a vector of parameters, as you'll find out if you read through the book, but for the purpose of this exposition we can think of it as one.
