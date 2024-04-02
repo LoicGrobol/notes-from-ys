@@ -38,12 +38,12 @@ For brevity's sake, I will try to keep to the useful definitions, but here are s
   and
   
   $$
-    r_{\theta,\beta} = \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}\tilde{u}\rVert + \lVert \tilde{u}\rVert^2
+    r_{\theta,\beta} = \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}\tilde{u}\rVert^2 + \lVert \tilde{u}\rVert^2
   $$
 
 [^1]: $u$ is not *really* a vector of parameters, as you'll find out if you read through the book, but for the purpose of this exposition we can think of it as one.
 
-In other words, @eq-PRSS-eq means that **for all $u$**, the PRSS can be written as the sum of its minimal value $r_{\theta,\beta}^2$ and a residual term: $\lVert L_{\theta}^TP(u-\tilde{u}])\rVert^2$, which contains the difference between $u$ and its optimal value $\tilde{u}$ (that was to be expected since this residual must be zero when $u=\tilde{u}$).
+In other words, @eq-PRSS-eq means that **for all $u$**, the PRSS can be written as the sum of its minimal value $r_{\theta,\beta}^2$ and a residual term: $\lVert L_{\theta}^TP(u-\tilde{u})\rVert^2$, which contains the difference between $u$ and its optimal value $\tilde{u}$ (that was to be expected since this residual must be zero when $u=\tilde{u}$).
 
 Note that I have not described every variable here, most glaringly $L_{\theta}$ and $P$, their time will come later.
 
