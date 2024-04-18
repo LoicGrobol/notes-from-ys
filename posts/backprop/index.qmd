@@ -255,7 +255,7 @@ And therefore we have
 $$
 \begin{aligned}
 	\frac{∂z^ℓ_k}{∂w^ℓ_{i,j}}
-		&= \frac{∂}{∂w^ℓ_{i,j}} \left(\sum_m w^ℓ_{k,m}o^{ℓ-1}_m\\\right)\\
+		&= \frac{∂}{∂w^ℓ_{i,j}} \left(\sum_m w^ℓ_{k,m}o^{ℓ-1}_m\right)\\
 		&= \sum_m \frac{∂}{∂w^ℓ_{i,j}}(w^ℓ_{k,m}o^{ℓ-1}_m)
 \end{aligned}
 $$ {#eq-dz-dw-sum}
