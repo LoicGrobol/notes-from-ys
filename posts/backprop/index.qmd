@@ -418,16 +418,3 @@ $$
 \end{aligned}
 \right.
 $$
-
-## Doing it in matrices?
-
-Let's start over, but this time we'll stay at the vector/matrix level, without decomposing gradients into partial derivatives.
-
-$$
-\begin{align}
-∇_{\!W^ℓ}\,e 
-	&= \operatorname{J}_{W^ℓ}O^ℓ × ∇_{\!O^ℓ}\,e\\
-	&= \operatorname{J}_{W^ℓ}Z^ℓ × \operatorname{J}_{Z^ℓ}O^ℓ × ∇_{\!O^ℓ}\,e\\
-	&= O^ℓ × \operatorname{J}_{Z^ℓ}O^ℓ × ∇_{\!O^ℓ}\,e\\
-\end{align}
-$$
