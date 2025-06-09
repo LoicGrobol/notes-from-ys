@@ -1,6 +1,8 @@
 project:
   type: website
   output-dir: _site
+  resources:
+    - "includes"
 
 website:
   title: "Notes from Ys and elsewhere"
@@ -19,6 +21,9 @@ format:
       - quartz
       - custom.scss
     css: styles.css
+    include-in-header:
+      - text: |
+          <script src="/js/mathjax-ext.js"></script>
 
 editor: visual
 

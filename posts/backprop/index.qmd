@@ -14,7 +14,7 @@ bibliography: biblio.bib
 
 <small>*Header by <a href="https://flickr.com/photos/zeissmicro/30614937102/">ZEISS Microscopy</a>, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>, via Flickr*</small>
 
-I have just taught the SGD algorithm with backpropagation to my NLP masters student and, as every year, I found that no explanation of it on the web looks satisfying to me. As the saying goes “*on est jamais mieux servi⋅e que par soi-même*”, so I figured I'd better get one. In the worst case, it'll be useful for a future version of me (hi mate!).
+I have just taught the SGD algorithm with backpropagation to my NLP masters students and, as every year, I found that no explanation of it on the web looks satisfying to me. As the saying goes “*on est jamais mieux servi⋅e que par soi-même*”, so I figured I'd better get one. In the worst case, it'll be useful for a future version of me (hi mate!).
 
 Backpropagation is a very frustrating topic. At its core, it's nothing very complicated and you never need more than relatively basic Bachelor-level maths (a bit of linear algebra, a bit of multivariate calculus). On the other hand it does involve the manipulation of many objects simultaneously, making it hard to keep everything in mind simultaneously, and even to write down the process, due to the sheer number of quantities involved. I am doing the best I can, but I realise that it can be easy to get bogged down. I can only offer a few words of advice:
 

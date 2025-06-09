@@ -1,6 +1,6 @@
 ---
 title: "That pesky equation 5.25"
-author: "Loïc Grobol"
+author: "Morgan Grobol"
 date: "2023-08-01"
 categories: [statistics, maths, R, linear algebra]
 image: "image.jpg"

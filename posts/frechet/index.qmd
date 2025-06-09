@@ -1,0 +1,165 @@
+---
+title: "Fréchet derivatives on cartesian product spaces"
+author: "Morgan Grobol"
+date: "2024-08-17"
+categories: [maths, neural networks, machine learning, optimisation, algorithm]
+image: "image.jpg"
+image-alt: "Piece of chocolate cake, sprinkled with cocoa powder, on a white plate decorated with chocolate sauce."
+bibliography: biblio.bib
+---
+
+$$
+\DeclareMathOperator\dif{d}
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
+\DeclarePairedDelimiter\nnorm{⦀}{⦀}
+\DeclarePairedDelimiter\iseg{⟦}{⟧}
+\newcommand\diff[1]{\dif\!#1}
+\newcommand\di[1]{\dif_1\!#1}
+\newcommand\dii[1]{\dif_2\!#1}
+\newcommand\dp[2]{\dif_{#1}\!#2}
+$$
+
+![](image.jpg){fig-alt="Piece of chocolate cake, sprinkled with cocoa powder, on a white plate decorated with chocolate sauce."}
+
+*The clean and pure abstractions no one dares to talk about.*
+
+<small>*Header by* <a href="https://commons.wikimedia.org/wiki/File:Piece_of_chocolate_cake_on_a_white_plate_decorated_with_chocolate_sauce.jpg">Daria Yakovleva. Minor edits made by Subsidiary account</a>, CC0, via Wikimedia Commons</small>
+
+## Definitions
+
+For the purpose of this post, we will work with the following definitions:
+
+A function $f: E → F$ where $E$ and $F$ are Banach spaces is (Fréchet-)differentiable at $a∈E$ if there exists an open neighbourhood $U$ of $a$ and a continuous linear function $\diff{f}(a): E→F$ such that for all $h∈E$, if $a+h∈U$,
+
+$$
+\begin{equation}
+    f(a+h) = f(a) + \diff{f}(a)(h) + \norm{h}ε(h)
+\end{equation}
+$$
+
+with $ε(h) \xrightarrow[h→0]{}0$.
+
+Note that a continuous linear function is always *bounded*, so for all $h∈E$
+
+$$
+\begin{equation}
+    \norm{\diff{f}(a)(h)} ⩽ \nnorm{\diff{f}(a)}\norm{h}
+\end{equation}
+$$
+
+where $\nnorm{\diff{f}(a)}=\sup_{\norm{h}=1}\diff{f}(a)(h)$ is the *operator norm* of $\diff{f}(a)$.
+
+## An example with two spaces
+
+Consider $f: E=E_1×E_2 \longrightarrow F$, where $E$, $E_1$, $E_2$ and $F$ are Banach spaces with norms[^1] $\norm{⋅}_E$, $\norm{⋅}_1$, $\norm{⋅}_2$ and $\norm{⋅}_F$ and $U=U_1×U_2$ is an open subset[^2] of $E$ such that:
+
+[^1]: These notations are tedious, but we are dealing with many norms in many spaces and they are not all equivalent, so some caution doesn't hurt.
+
+[^2]: Note that not all open subsets of $E$ are of this form!
+
+1.  The topology induced by $\norm{⋅}_E$ on $E$ is the product of the topologies induced by $\norm{⋅}_1$ and $\norm{⋅}_2$ on $E_1$ and $E_2$. This implies that:
+    -   $\norm{⋅}_E$ is equivalent to $\norm{⋅}_{∞}: x=(x_1, x_2)↦\max(\norm{x_1}_1, \norm{x_2}_2)$ and therefore there exists $K>0$ such that for all $x=(x_1, x_2)∈E$, $\norm{x_1}_1 ⩽ K\norm{x}_E$ and $\norm{x_2}_2 ⩽ K\norm{x}_E$
+    -   $U_1$ and $U_2$ are open.
+2.  For all $a=(a_1, a_2)∈U_1×U_2$, $f^1_a: x ↦ f(x, a_2)$ and $f^2_a: x ↦ f(a_1, x)$ are differentiable on $U_1$ and $U_2$ respectively.
+3.  $\di{f}: a ↦ \diff{f}^1_a(a_1)$ and $\dii{f}: a ↦ \diff{f}^2_a(a_2)$ are continuous **for the** $\nnorm{⋅}$ topology.
+
+$\di{f}(a)$ and $\dii{f}(a)$ are the *partial differentials of* $f$ at $a$.
+
+We want to prove that $f$ is differentiable on $U$ and for all $a=(a_1, a_2)∈U$, for all $h=(h_1, h_2)∈E$ such that $a+h∈U$, $\diff{f}(a)(h) = \di{f}(a)(h_1)+\dii{f}(a)(h_2)$.
+
+We have: $$
+\begin{align}
+    \MoveEqLeft f(a+h) - f(a)\\
+        &= f(a_1+h_1, a_2+h_2) - f(a_1, a_2+h_2) + f(a_1, a_2+h_2) - f(a_1, a_2)\\
+        &= \left[f^1_{a+h}(a_1+h_1) - f^1_{a+h}(a_1)\right] + \left[f^1_a(a_2+h_2) - f^2_a(a_2)\right]\\
+        &= \left[\di{f}(a+h)(h_1) + \norm{h_1}_1ε_1(h_1)\right] + \left[\dii{f}(a)(h_2) + \norm{h_2}_2ε_2(h_2)\right]
+\end{align}
+$$
+
+with $ε_1(h_1)\xrightarrow[h_1→0]{}0$ and $ε_2(h_2)\xrightarrow[h_2→0]{}0$.
+
+Therefore
+
+$$
+\begin{align}
+    \MoveEqLeft \norm*{f(a+h) - f(a)-\di{f}(a)(h_1)+\dii{f}(a)(h_2)}_F\\
+        &=
+            \norm*{\di{f}(a+h)(h_1)
+            - \di{f}(a)(h_1)
+            + \norm{h_1}ε_1(h_1)
+            + \norm{h_2}ε_2(h_2)}_F\\
+        &⩽
+            \underbrace{
+                \norm*{\di{f}(a+h)(h_1) - \di{f}(a)(h_1)}_F
+            }_{
+                ⩽\nnorm{\di{f}(a+h) - \di{f}(a)}\norm{h_1}_1
+            }
+            + \norm{h_1}_1\norm{ε_1(h_1)}_F
+            + \norm{h_2}_2\norm{ε_2(h_2)}_F\\
+        &⩽
+            \nnorm{\di{f}(a+h)- \di{f}(a)}
+                \underbrace{\norm{h_1}_1}_{⩽K\norm{h}_E}
+            + \underbrace{\norm{h_1}_1}_{⩽K\norm{h}_E}\norm{ε_1(h_1)}_F
+            + \underbrace{\norm{h_2}_2}_{⩽K\norm{h}_E}\norm{ε_2(h_2)}_F\\
+        &⩽
+            \norm{h}_E K
+            \Big[
+                \underbrace{\nnorm{\di{f}(a+h)- \di{f}(a)}}_{\xrightarrow[h→0]{}0}
+                + \underbrace{\norm{ε_1(h_1)}_F}_{\xrightarrow[h→0]{}0}
+                + \underbrace{\norm{ε_2(h_2)}_F}_{\xrightarrow[h→0]{}0}
+            \Big]
+\end{align}
+$$
+
+q.e.d.
+
+The ideas here are:
+
+-   We have linear approximations for the change in $f(a)$ for perturbations of any $a∈U$ in a single coordinate and we are looking for the same kind of approximations when both coordinates can change at once.
+-   Any arbitrary perturbation $h=(h_1, h_2)$ around $a$ can be decomposed as two successive perturbationss: $(0, h_2)$, then[^3] $(h_1, 0)$.
+-   The perturbation by $(0, h_2)$ yieds changes in $f$ that are directly approximated by $\dii{f}(a)$.
+-   Similarly, the perturbation by $(h_1, 0)$ yields changes that can be approximated using $\di{f}$, but since it occurs after the perturbation by $(0, h_2)$, it is approximated by $\di{f}(a+h)$, which depends of $h_1$, not $\di{f}(a)$ so we need more work.
+-   The **uniform** operator continuity of $\di{f}$, gives us a **uniform** control over $\di{f}(a+h)$ rather than just a pointwise one at $h_1$, with the consequence that $\norm*{\di{f}(a+h)(h_1) - \di{f}(a)(h_1)}_F=o(\norm{h}_E)$. **TODO: maybe use the Banach-Steinhaus theorem here? If U is compact, the continuity of di at a implies the uniform continuity? check that**
+
+[^3]: Of course the order doesn't matter.
+
+Note that:
+
+-   We need the continuity of $\dif_i\!f$ to be for the $\nnorm{⋅}$ topology because we need $\di{f}(a+h)(h_1) - \di{f}(a)(h_1) = o(h)$, in particular the strong operator continuity would not suffice *for this proof*.
+-   In general, the hypotheses could be weaker[^4] (otherwise being differentiable would be equivalent to being $𝓒^1$), but I think that this combination has a good balance between generalisability and clarity.
+-   We don't need the projections from $E$ to be isometric (i.e. $\norm{(h_1, 0)}_E=\norm{h_1}_1$, which is the case if $\norm{⋅}E$ is a $p$-norm for instance), but we do need them to be *at least* locally Lipschitz at $0$.
+
+[^4]: Note for instance that we did not use the continuity of $\dii{f}$
+
+## The general case
+
+Consider $f: E=⨉_{i∈I=\iseg{1, n}}E_i \longrightarrow F$, where $E$ and $F$ are Banach spaces with norms $\norm{⋅}_E$ and $\norm{⋅}_F$ ; for all $i$, $E_i$ is a Banach space for $\norm{⋅}_i$ ; and the topology induced by $\norm{⋅}_E$ on $E$ is the product topology[^5].
+
+[^5]: Incidentally, this forces $I$ to be finite, since the product topology on an infinite product space is [not normable](https://math.stackexchange.com/a/168037).
+
+We need[^6] some notations for coordinates manipulations. For all $i∈I$ and $a=(a_i)_{i∈I}∈E$ we write :
+
+[^6]: If you are the kind of person who wants to avoid stating explicitly that $I=\iseg{1,n}$ you can just say that $I$ is finite so it can be ordered, and write $p_i(a)=(𝟙_{j⩽i}\,a_j)_{j∈I}$ and $ψ_i(a)(x)=(𝟙_{j≠i}\,a_j+𝟙_{j=i}\,x)_{j∈I}$.
+
+-   $π_i(a) = a_i$. Note that since the topology on $E$ is the product topology, $π_i$ is an open map, i.e. for all open subset $U$ of $E$, $π_i(U)$ is open.
+-   $p_i(a) = (a_1, …, a_{i-1}, 0, …, 0)$, with $p_0(a) = a$. **TODO check the order here, is it not** $(0, …, 0, a_{i+1}, …, a_n)$ instead?
+-   $ψ_i(a)(x) = (a_1, …, a_{i-1}, x, a_{i+1}, …, a_n)$.
+
+That $\norm{⋅}_E$ induces the product topology implies that $\norm{⋅}_E$ is equivalent to $\norm{⋅}_∞: x=(x_i) ↦ \max_{i∈I}\norm{x_i}_i$. In particular, there exists $K>0$ such that for all $x∈E$, for all $i∈I$, $\norm{x_i}_i ⩽ K\norm{x}_E$.
+
+1.  For all $a=(a_i)_{i∈I}∈⨉_{i∈I}U_i$, for all $i∈I$, $f∘ψ_i(a)$ (the $i$-th partial function of $f$ at $a$) is differentiable over $π_i(U)$.
+2.  $\dp{i}{f}: a ↦ \dif(f∘ψ_i(a))(a_i)$ is continuous over $U$ for the $\nnorm{⋅}$ topology.
+
+Let $a∈U$ and $h∈E$ such that $a+h∈U$, we have:
+
+$$
+\begin{align}
+    \MoveEqLeft \norm*{f(a+h) - f(a) - \sum_i\dp{i}{f}(a)(h_i)}\\
+        &= \norm*{\sum_i\left[f(a+p_{i-1}(h))-f(a+p_i(h))\right] - \sum_i\dp{i}{f}(a)(h_i)}\\
+        &⩽ \sum_i\norm*{f(a+p_{i-1}(h))-f(a+p_i(h)) - \dp{i}{f}(a)(h_i)}\\
+        &⩽ \sum_i\norm*{\dp{i}{f}(a+p_{i-1}(h))(h_i) + \norm{h_i}_iε_i(h_i) - \dp{i}{f}(a+p_i(h))(h_i)}\\
+        &⩽ \sum_i\Big[\norm*{\dp{i}{f}(a+p_{i-1}(h))(h_i) - \dp{i}{f}(a+p_i(h))(h_i)} + \norm{h_i}_i\norm{ε_i(h_i)}\Big]\\
+        &⩽ \sum_i\Big[\nnorm{\dp{i}{f}(a+p_{i-1}(h)) - \dp{i}{f}(a+p_i(h))}\norm{h_i}_i + K\norm{h}\norm{ε_i(h_i)}\Big]\\
+        &⩽ \norm{h} K \sum_i\Big[\underbrace{\nnorm{\dp{i}{f}(a+p_{i-1}(h)) - \dp{i}{f}(a+p_i(h))}}_{\xrightarrow[h→0]{}0} + \underbrace{\norm{ε_i(h_i)}}_{\xrightarrow[h→0]{}0}\Big]
+\end{align}
+$$
