@@ -116,8 +116,8 @@ q.e.d.
 The ideas here are:
 
 -   We have linear approximations for the change in $f(a)$ for perturbations of any $a∈U$ in a single coordinate and we are looking for the same kind of approximations when both coordinates can change at once.
--   Any arbitrary perturbation $h=(h_1, h_2)$ around $a$ can be decomposed as two successive perturbationss: $(0, h_2)$, then[^3] $(h_1, 0)$.
--   The perturbation by $(0, h_2)$ yieds changes in $f$ that are directly approximated by $\dii{f}(a)$.
+-   Any arbitrary perturbation $h=(h_1, h_2)$ around $a$ can be decomposed as two successive perturbations: $(0, h_2)$, then[^3] $(h_1, 0)$.
+-   The perturbation by $(0, h_2)$ yields changes in $f$ that are directly approximated by $\dii{f}(a)$.
 -   Similarly, the perturbation by $(h_1, 0)$ yields changes that can be approximated using $\di{f}$, but since it occurs after the perturbation by $(0, h_2)$, it is approximated by $\di{f}(a+h)$, which depends of $h_1$, not $\di{f}(a)$ so we need more work.
 -   The **uniform** operator continuity of $\di{f}$, gives us a **uniform** control over $\di{f}(a+h)$ rather than just a pointwise one at $h_1$, with the consequence that $\norm*{\di{f}(a+h)(h_1) - \di{f}(a)(h_1)}_F=o(\norm{h}_E)$. **TODO: maybe use the Banach-Steinhaus theorem here? If U is compact, the continuity of di at a implies the uniform continuity? check that**
 

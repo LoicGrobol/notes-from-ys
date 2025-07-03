@@ -12,7 +12,7 @@ bibliography: biblio.bib
 
 *A cute property of Penalized Least Squares that took me more work than I'm comfortable disclosing.*
 
-<small>*Header by <a href="https://commons.wikimedia.org/wiki/File:New_york_times_square-terabass.jpg">Terabass</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>, via Wikimedia Commons*</small>
+<small>*Header by* <a href="https://commons.wikimedia.org/wiki/File:New_york_times_square-terabass.jpg">Terabass</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>, via Wikimedia Commons</small>
 
 I'm currently reading Douglas M. Bates' “lme4: Mixed-effects modeling with R” (@bates2018Lme4MixedeffectsModeling, the latest version, which for some reason seems only available from [someone at ETH Zurich's personal stash](https://stat.ethz.ch/~maechler/MEMo-pages/lMMwR.pdf)). It's generally well written and I have learned a lot, but I find it a bit too terse in some places, with unclear jumps in the reasoning or computations. One such jump is equation 5.25:
 
@@ -26,24 +26,26 @@ I have had inordinate troubles understanding how the author arrived at this, so 
 
 For brevity's sake, I will try to keep to the useful definitions, but here are some pointers on what's going on here:
 
-- We're trying to fit a mixed-effects linear model (MELM) with observations $y_{\mathrm{obs}}$. $\beta$ and $u$ [^1] are the parameters associated with the fixed and the random effects respectively.
-- The left-hand side is a **Penalized Residual Sum of Squares** (PRSS)
-  - The first part, $\lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2$ is the [sum of squared residuals](https://en.wikipedia.org/wiki/Residual_sum_of_squares) for the problem $y = X\beta - Z\Lambda_{\theta}u + \varepsilon$.
-  - The second part is a penalty term on the norm of $u$, which comes from the chosen formulation of the MELM where the random effects follow a centered normal distribution. It also has the nice effect of favoring fixed-effect explanations (more on this in another post, hopefully).
-- The whole left-hand side is minimized at $\tilde{u}$ with value $r_{\theta,\beta}^2$, i.e.
-  
-  $$
-    \tilde{u} = \mathop{\mathrm{argmin}}_u \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2 + \lVert u\rVert^2
-  $$
-  and
-  
-  $$
-    r_{\theta,\beta} = \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}\tilde{u}\rVert + \lVert \tilde{u}\rVert^2
-  $$
+-   We're trying to fit a mixed-effects linear model (MELM) with observations $y_{\mathrm{obs}}$. $\beta$ and $u$ [^1] are the parameters associated with the fixed and the random effects respectively.
+
+-   The left-hand side is a **Penalized Residual Sum of Squares** (PRSS)
+
+    -   The first part, $\lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2$ is the [sum of squared residuals](https://en.wikipedia.org/wiki/Residual_sum_of_squares) for the problem $y = X\beta - Z\Lambda_{\theta}u + \varepsilon$.
+    -   The second part is a penalty term on the norm of $u$, which comes from the chosen formulation of the MELM where the random effects follow a centered normal distribution. It also has the nice effect of favoring fixed-effect explanations (more on this in another post, hopefully).
+
+-   The whole left-hand side is minimized at $\tilde{u}$ with value $r_{\theta,\beta}^2$, i.e.
+
+    $$
+      \tilde{u} = \mathop{\mathrm{argmin}}_u \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}u\rVert^2 + \lVert u\rVert^2
+    $$ and
+
+    $$
+      r_{\theta,\beta} = \lVert y_{\mathrm{obs}} - X\beta - Z\Lambda_{\theta}\tilde{u}\rVert + \lVert \tilde{u}\rVert^2
+    $$
 
 [^1]: $u$ is not *really* a vector of parameters, as you'll find out if you read through the book, but for the purpose of this exposition we can think of it as one.
 
-In other words, @eq-PRSS-eq means that **for all $u$**, the PRSS can be written as the sum of its minimal value $r_{\theta,\beta}^2$ and a residual term: $\lVert L_{\theta}^TP(u-\tilde{u}])\rVert^2$, which contains the difference between $u$ and its optimal value $\tilde{u}$ (that was to be expected since this residual must be zero when $u=\tilde{u}$).
+In other words, @eq-PRSS-eq means that **for all** $u$, the PRSS can be written as the sum of its minimal value $r_{\theta,\beta}^2$ and a residual term: $\lVert L_{\theta}^TP(u-\tilde{u}])\rVert^2$, which contains the difference between $u$ and its optimal value $\tilde{u}$ (that was to be expected since this residual must be zero when $u=\tilde{u}$).
 
 Note that I have not described every variable here, most glaringly $L_{\theta}$ and $P$, their time will come later.
 
@@ -51,8 +53,8 @@ Note that I have not described every variable here, most glaringly $L_{\theta}$ 
 
 We have called the left-hand side of @eq-PRSS-eq a **Penalized Residual Sum of Squares**. There are two notable things here
 
-- Manipulating this is **not** nice. Sums of norms, even squared ones are not very appealing in general. If we attempt to prove equation (5.25) directly, this will be a major pain.
-- This PRSS looks **tantalizingly** like a normal sum of squared residuals. If you squint, it's actually a sum of squared sums of squares.
+-   Manipulating this is **not** nice. Sums of norms, even squared ones are not very appealing in general. If we attempt to prove equation (5.25) directly, this will be a major pain.
+-   This PRSS looks **tantalizingly** like a normal sum of squared residuals. If you squint, it's actually a sum of squared sums of squares.
 
 So the first thing we will do is to actually make it look like the SSR of an ordinary least squares problem using the following trick: for all $u$ we have,
 
@@ -148,12 +150,11 @@ $$
 \lVert y - X\beta \rVert^2  = \lVert y - X\hat{\beta} \rVert^2 + \lVert X(\hat{\beta}-\beta)\rVert^2
 $$ {#eq-OLS-sol}
 
-
 This looks very much like @eq-PRSS-eq! Now we only need a tiny bit of work to go back to our PRSS. For that, we will actually not use @eq-OLS-sol but the second to last line of @eq-OLS-proof:
 
 $$
 \lVert y - X\beta \rVert^2  - \lVert y - X\hat{\beta} \rVert^2 = (\hat{\beta}-\beta)^TX^TX(\hat{\beta}-\beta)
-$$ 
+$$
 
 Which, if we apply it to @eq-OLS-star gives us:
 
@@ -171,13 +172,14 @@ $$
 
 Solving this linear system directly is computationally intensive, but in this case ${X^*}^TX^*$ is definite positive[^2] and it can be made more efficient using [Cholesky's decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition), which in this case amounts to find a lower triangular matrix $L_{\theta}$ such that
 
+[^2]: See the exercices at the end of chapter 5 in @bates2018Lme4MixedeffectsModeling to see why it can be guaranteed in non-made up scenarios.
+
 $$
 P^TL_{\theta}L_{\theta}^TP = {X^*}^TX^*
 $$ {#eq-chol}
 
 where $P$ is a the permutation matrix obtained from a [(approximated) minimal degree algorithm](https://en.wikipedia.org/wiki/Minimum_degree_algorithm) to makes the decomposition process even more efficient[^3].
 
-[^2]: See the exercices at the end of chapter 5 in @bates2018Lme4MixedeffectsModeling to see why it can be guaranteed in non-made up scenarios.
 [^3]: See @ingram2006MinimumDegreeReordering for a good intro to this.
 
 ## Wrap up
@@ -198,9 +200,9 @@ which proves @eq-PRSS-eq.
 
 ## Further reading
 
-- As I said at the top @bates2018Lme4MixedeffectsModeling is a really good work, which I recommend if you want to understand the inner workings of lme4 in depth. I will probably write more about the points I found interesting or confusing in upcoming posts.
-- In general, I recommend the articles of the English Wikipedia on these topics, which are usually good and provide good references if you want to delve into the technicalities. See in particular @2022ProofsInvolvingOrdinary.
-- As a reference for linear models, I recommend @rao2007LinearModelsGeneralizations, an extremely comprehensive — if dry — textbook.
-- Should you happen — as I did — to fall into a rabbit hole of “but why?!” regarding the probability theory tools used for these topics, I have to recommend my personal reference: @klenke2020ProbabilityTheoryComprehensive
+-   As I said at the top @bates2018Lme4MixedeffectsModeling is a really good work, which I recommend if you want to understand the inner workings of lme4 in depth. I will probably write more about the points I found interesting or confusing in upcoming posts.
+-   In general, I recommend the articles of the English Wikipedia on these topics, which are usually good and provide good references if you want to delve into the technicalities. See in particular @2022ProofsInvolvingOrdinary.
+-   As a reference for linear models, I recommend @rao2007LinearModelsGeneralizations, an extremely comprehensive — if dry — textbook.
+-   Should you happen — as I did — to fall into a rabbit hole of “but why?!” regarding the probability theory tools used for these topics, I have to recommend my personal reference: @klenke2020ProbabilityTheoryComprehensive
 
 Have fun and see you next time!
